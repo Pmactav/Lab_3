@@ -34,10 +34,13 @@ int main() {
     MatrixXd Cv = sigma0_sq*(stVarMatrix-stVarMatrix*B.transpose()*M.inverse()*B*stVarMatrix);
     VectorXd std_v = Cv.diagonal().cwiseSqrt();
     VectorXd l_hat = l + v_hat;
-    MatrixXd C = Cl - Cv;
-    //VectorXd check = B * v_hat + w;
-    //cout << check.transpose() << endl;
-    //cout << l_hat << endl;
-    cout << v_hat;
+    MatrixXd Cl_hat = Cl - Cv;
+
+    MatrixXd J = ReadDatatoMatrix("../jMatrix.txt");
+    //MatrixXd J_l = J + l_hat;
+    //VectorXd stationHeight = J_l.colwise().sum()+135.961;
+    MatrixXd Cx = J*Cl_hat*J.transpose();
+    WriteMatrixToFile(Cx, "../Cx.txt", 10);
+    cout << Cx << endl;
     return 0;
 }

@@ -17,30 +17,42 @@ int main() {
     MatrixXd l = ReadDatatoMatrix("../dhs_2026.txt");
     MatrixXd sigma_mm = ReadDatatoMatrix("../stdevs_2026.txt");
     //Unit conversion, populate vectors to diagonals where required
-    MatrixXd sigma_m = sigma_mm*(.001);
+    MatrixXd sigma_m = sigma_mm*(.01);
     MatrixXd P = sigma_m.array().square().inverse().matrix().asDiagonal(); //square st dev, take inverse, store in main diagonal of P
     MatrixXd stVarMatrix = sigma_m.array().square().matrix().asDiagonal();
-    //Begin populating parameters
+    //Begin populating parameters and create corrections
     MatrixXd w = B*l;
-    //MatrixXd test = w.rowwise().sum();
-    //cout << test.transpose() << endl;
     MatrixXd M = B * P.inverse() * B.transpose();
     VectorXd k = M.ldlt().solve(w); //create Legrange Multiplier
     VectorXd v_hat = -P.inverse() * B.transpose() * k; //create vector of residuals
     double n = l.rows();
-    double c = B.rows();
-    double sigma0_sq = (v_hat.transpose()*P*v_hat)(0,0)/(n-c);
-    MatrixXd Cl = MatrixXd::Identity(n,n);
-    MatrixXd Cv = sigma0_sq*(stVarMatrix-stVarMatrix*B.transpose()*M.inverse()*B*stVarMatrix);
-    VectorXd std_v = Cv.diagonal().cwiseSqrt();
+    double r = B.rows();
+    double sigma0_sq = (v_hat.transpose()*P*v_hat)(0,0)/r;
+    cout << sigma0_sq << endl;
+    cout << r << endl;
+    double numerator = (v_hat.transpose()*P*v_hat)(0,0);
+    cout << "numerator: " << numerator << endl;
+
+    // apply corrections and populate variance covariance
+    MatrixXd sigma = sigma_m.array().square().matrix().asDiagonal();
+    MatrixXd Cl = sigma0_sq * sigma;
+    MatrixXd Cv = sigma0_sq*P.inverse()*B.transpose()*(B*P.inverse()*B.transpose()).inverse()*B*P.inverse();
     VectorXd l_hat = l + v_hat;
     MatrixXd Cl_hat = Cl - Cv;
-
+    VectorXd Cl_hatDiag = Cl_hat.diagonal().array();
+    WriteMatrixToFile(Cv, "../Cv.txt", 8);
+    WriteMatrixToFile(Cl_hat, "../Cl_hat.txt", 8);
+    cout << Cl_hatDiag << endl;
+    //Task 2
     MatrixXd J = ReadDatatoMatrix("../jMatrix.txt");
-    //MatrixXd J_l = J + l_hat;
-    //VectorXd stationHeight = J_l.colwise().sum()+135.961;
+    VectorXd J_l = J*l_hat;
+    VectorXd stationHeight = J_l.array()+135.961;
     MatrixXd Cx = J*Cl_hat*J.transpose();
-    WriteMatrixToFile(Cx, "../Cx.txt", 10);
-    cout << Cx << endl;
+    VectorXd stDevCx = Cx.diagonal().array().sqrt();
+    //cout << stDevCx << endl;
+    WriteMatrixToFile(Cx, "../Cx.txt", 6);
+    //cout << J_l << endl;
+    //cout << stationHeight << endl;
+
     return 0;
 }

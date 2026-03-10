@@ -18,7 +18,7 @@ int main() {
     MatrixXd sigma_cm = ReadDatatoMatrix("../stdevs_2026.txt");
     //Unit conversion, populate vectors to diagonals where required
     MatrixXd sigma_m = sigma_cm*(.0001);
-    MatrixXd P = sigma_m.array().square().inverse().matrix().asDiagonal(); //square st dev, take inverse, store in main diagonal of P
+    MatrixXd P = sigma_m.array().square().inverse().matrix().asDiagonal(); 
     MatrixXd stVarMatrix = sigma_m.array().square().matrix().asDiagonal();
     //Begin populating parameters and create corrections
     MatrixXd w = B*l;
